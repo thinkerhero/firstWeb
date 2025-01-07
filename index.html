@@ -1,14 +1,227 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>决战舔狗KING</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            transform: rotate(0deg);
+        }
+
+        .sector {
+            position: absolute;
+            width: 50%;
+            height: 2px;
+            background: #333;
+            top: 50%;
+            left: 50%;
+            transform-origin: left center;
+        }
+
+        .circle-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #333;
+            border-radius: 50%;
+        }
+
+        .circle-inner {
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            border: 2px solid #333;
+            border-radius: 50%;
+            top: 15%;
+            left: 15%;
+            background: #f0f0f0;
+        }
+
+        .text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform-origin: 50% -170px; /* 控制文字的位置，接近圆环边缘 */
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+        .pointer-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            border: 2px solid #333;
+            border-radius: 50%;
+            z-index: 3;
+        }
+
+        .pointer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid red;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 0 10px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <div style="width:100%;height: 500px;background-color:aqua;">
-
+    <div class="wheel-container">
+        <div class="wheel" id="wheel">
+            <div class="circle-outer"></div>
+            <div class="circle-inner"></div>
+        </div>
+        <div class="pointer-container">
+            <div class="pointer"></div>
+        </div>
     </div>
+    <div class="controls">
+        <button id="startBtn">开始</button>
+        <button id="stopBtn" disabled>结束</button>
+    </div>
+    <div id="result" class="result"></div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resultDiv = document.getElementById('result');
+        let isSpinning = false;
+        let currentRotation = 0;
+
+        // 创建16个扇形区域
+        const totalSectors = 16;
+        const sectorAngle = 360 / totalSectors;
+
+        for (let i = 0; i < totalSectors; i++) {
+            // 创建分割线
+            const line = document.createElement('div');
+            line.className = 'sector';
+            line.style.transform = `rotate(${i * sectorAngle}deg)`;
+            wheel.appendChild(line);
+
+            // 创建文字
+            const text = document.createElement('div');
+            text.className = 'text';
+            text.textContent = `${i + 1}组`;
+
+            // 计算文字位置
+            const angle = i * sectorAngle + sectorAngle / 2; // 每个扇形的中间角度
+            const radius = 170; // 修改半径，控制文字更接近圆环边缘
+            const x = radius * Math.cos((angle - 90) * Math.PI / 180); // 转换为弧度
+            const y = radius * Math.sin((angle - 90) * Math.PI / 180);
+
+            text.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+            text.style.transformOrigin = 'center'; // 保持文字水平
+            wheel.appendChild(text);
+        }
+
+        // 计算最终指向的组别
+        function calculateResult(angle) {
+            let normalizedAngle = angle % 360;
+            if (normalizedAngle < 0) normalizedAngle += 360;
+            let group = Math.floor(normalizedAngle / sectorAngle);
+            group = (totalSectors - group) % totalSectors;
+            return group + 1;
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (!isSpinning) {
+                isSpinning = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                resultDiv.textContent = '';
+
+                wheel.style.transition = 'transform 0.1s linear';
+                const spin = () => {
+                    currentRotation += 5;
+                    wheel.style.transform = `rotate(${currentRotation}deg)`;
+                    if (isSpinning) {
+                        requestAnimationFrame(spin);
+                    }
+                };
+                spin();
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (isSpinning) {
+                isSpinning = false;
+                stopBtn.disabled = true;
+                const targetGroup = Math.floor(Math.random() * totalSectors);
+                const targetAngle = targetGroup * sectorAngle;
+                const extraSpins = 720;
+                const finalAngle = currentRotation + extraSpins + targetAngle;
+
+                wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+                wheel.style.transform = `rotate(${finalAngle}deg)`;
+
+                // setTimeout(() => {
+                //     currentRotation = finalAngle % 360;
+                //     startBtn.disabled = false;
+                //     const result = calculateResult(finalAngle);
+                //     resultDiv.textContent = `停在了第 ${result} 组`;
+                // }, 4000);
+            }
+        });
+    </script>
 </body>
 </html>
